@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Will You Be My Valentine? 💘</title>
+
+  <style>
+    body {
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #ffd6e0, #ffe6eb);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    .container {
+      text-align: center;
+      z-index: 2;
+    }
+
+    h1 {
+      font-size: 2.3rem;
+      color: #ff3366;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 20px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    #yes {
+      background: #ff4d6d;
+      color: white;
+    }
+
+    #no {
+      background: #777;
+      color: white;
+    }
+
+    #taunt {
+      margin-top: 10px;
+      font-size: 1.4rem;
+      color: #ff1a4b;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .finalText {
+      font-size: 1.8rem;
+      color: #ff1a4b;
+    }
+
+    .finalSub {
+      font-size: 1.4rem;
+      color: #ff3366;
+    }
+
+    .finalHint {
+      margin-top: 10px;
+      font-size: 1.1rem;
+      opacity: 0.8;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    @keyframes shake {
+      0% { transform: translate(0); }
+      25% { transform: translate(-8px, 5px); }
+      50% { transform: translate(8px, -5px); }
+      75% { transform: translate(-6px, -3px); }
+      100% { transform: translate(0); }
+    }
+
+    .shake {
+      animation: shake 0.6s;
+    }
+
+    .emoji-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .emoji {
+      position: absolute;
+      font-size: 28px;
+      animation: floatUp linear infinite;
+    }
+
+    @keyframes floatUp {
+      from { transform: translateY(100vh); }
+      to { transform: translateY(-10vh); }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="emoji-bg" id="emojiBg"></div>
+
+  <div class="container">
+    <h1 id="question">
+      Sayali 💕<br />
+      Will you be my Valentine?
+    </h1>
+
+    <div class="buttons">
+      <button id="yes">Yes 💖</button>
+      <button id="no">No 😏</button>
+    </div>
+
+    <p id="taunt" class="hidden"></p>
+
+    <div id="final" class="hidden">
+      <p class="finalText">Aniket, Sayali said YES 💘</p>
+      <p class="finalSub">Dudu kisses Bubu ❤️</p>
+      <p class="finalHint">📸 Screenshot this moment 😌</p>
+    </div>
+  </div>
+
+  <canvas id="confetti"></canvas>
+
+  <script>
+    const noBtn = document.getElementById("no");
+    const yesBtn = document.getElementById("yes");
+    const taunt = document.getElementById("taunt");
+    const finalBox = document.getElementById("final");
+    const buttonsBox = document.querySelector(".buttons");
+    const emojiBg = document.getElementById("emojiBg");
+
+    let noAttempts = 0;
+    const maxAttempts = 10;
+    let noScale = 1;
+    let yesScale = 1;
+    let emojiSpeed = 800;
+
+    const taunts = [
+      "Try harder 😏","Nice try 😌","Nope 😂","Almost 😜",
+      "Still no 😈","LOL no 😆","You wish 😌",
+      "Again? 😂","Not happening 😏","Okay stop 😅"
+    ];
+
+    function playNoSound() {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      osc.frequency.value = 300;
+      osc.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    }
+
+    function vibrate(pattern) {
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    }
+
+    const emojis = ["💖","💘","❤️","😍","🥰","😘","💕","💋"];
+    let emojiInterval;
+
+    function spawnEmoji() {
+      const e = document.createElement("div");
+      e.className = "emoji";
+      e.innerText = emojis[Math.floor(Math.random()*emojis.length)];
+      e.style.left = Math.random()*100 + "vw";
+      e.style.animationDuration = 6 + Math.random()*4 + "s";
+      emojiBg.appendChild(e);
+      setTimeout(()=>e.remove(),10000);
+    }
+
+    function startEmojis() {
+      emojiInterval = setInterval(spawnEmoji, emojiSpeed);
+    }
+
+    function speedUpEmojis() {
+      clearInterval(emojiInterval);
+      emojiSpeed = Math.max(200, emojiSpeed - 150);
+      startEmojis();
+    }
+
+    noBtn.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      if (noAttempts >= maxAttempts) return;
+
+      playNoSound();
+      vibrate([60,40,60]);
+
+      taunt.innerText = taunts[noAttempts % taunts.length];
+      taunt.classList.remove("hidden");
+      setTimeout(()=>taunt.classList.add("hidden"),700);
+
+      noAttempts++;
+      noScale -= 0.06;
+
+      const x = Math.random()*(window.innerWidth-120);
+      const y = Math.random()*(window.innerHeight-80);
+
+      noBtn.style.position = "absolute";
+      noBtn.style.transform = `scale(${noScale})`;
+      noBtn.style.left = x+"px";
+      noBtn.style.top = y+"px";
+
+      if (noAttempts === maxAttempts) {
+        setTimeout(()=>noBtn.style.display="none",200);
+      }
+    });
+
+    yesBtn.addEventListener("click", () => {
+      yesScale += 0.45;
+      yesBtn.style.transform = `scale(${yesScale})`;
+      yesBtn.innerText = "YESSS 💘😍";
+      speedUpEmojis();
+
+      if (yesScale > 2.4) {
+        document.body.classList.add("shake");
+        vibrate([100,50,100,50,200]);
+
+        clearInterval(emojiInterval);
+        emojiBg.innerHTML = "";
+        buttonsBox.style.display = "none";
+        finalBox.classList.remove("hidden");
+        startConfetti();
+      }
+    });
+
+    const canvas = document.getElementById("confetti");
+    const ctx = canvas.getContext("2d");
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+
+    let confetti = [];
+
+    function startConfetti() {
+      for (let i=0;i<300;i++) {
+        confetti.push({
+          x: Math.random()*canvas.width,
+          y: Math.random()*canvas.height,
+          size: Math.random()*4+2,
+          type: ["c","s","l"][Math.floor(Math.random()*3)],
+          speed: Math.random()*3+2,
+          color: `hsl(${Math.random()*360},100%,70%)`
+        });
+      }
+      animateConfetti();
+    }
+
+    function drawStar(x,y,r,c){
+      ctx.fillStyle=c;
+      ctx.beginPath();
+      for(let i=0;i<5;i++){
+        ctx.lineTo(x+r*Math.cos((18+i*72)*Math.PI/180),
+                   y-r*Math.sin((18+i*72)*Math.PI/180));
+        ctx.lineTo(x+r/2*Math.cos((54+i*72)*Math.PI/180),
+                   y-r/2*Math.sin((54+i*72)*Math.PI/180));
+      }
+      ctx.closePath(); ctx.fill();
+    }
+
+    function animateConfetti(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      confetti.forEach(c=>{
+        ctx.strokeStyle=ctx.fillStyle=c.color;
+        if(c.type==="c"){
+          ctx.beginPath(); ctx.arc(c.x,c.y,c.size,0,Math.PI*2); ctx.fill();
+        } else if(c.type==="s"){
+          drawStar(c.x,c.y,c.size+2,c.color);
+        } else {
+          ctx.beginPath(); ctx.moveTo(c.x,c.y); ctx.lineTo(c.x,c.y+12); ctx.stroke();
+        }
+        c.y+=c.speed;
+        if(c.y>canvas.height) c.y=0;
+      });
+      requestAnimationFrame(animateConfetti);
+    }
+
+    startEmojis();
+  </script>
+
+</body>
+</html>
